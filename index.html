@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3dar · Venta de equipamiento</title>
+  <meta name="description" content="Liquidación de equipamiento de oficina 3dar: mobiliario, hardware y electrodomésticos en venta." />
+  <link rel="preconnect" href="https://dolarapi.com" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__inner">
+      <h1 id="titulo">3dar · Liquidación de equipamiento</h1>
+      <p id="subtitulo" class="hero__sub">Cargando…</p>
+      <div class="hero__dolar">
+        <span class="dot" id="dolar-dot"></span>
+        <span id="dolar-label">Cotización dólar: <strong id="dolar-valor">—</strong></span>
+        <span class="hero__dolar-actualizado" id="dolar-actualizado"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="secciones" id="secciones" role="tablist" aria-label="Secciones"></nav>
+
+    <p class="seccion-desc" id="seccion-desc"></p>
+
+    <section class="toolbar">
+      <input type="search" id="buscador" class="toolbar__search" placeholder="Buscar objeto, modelo o categoría…" aria-label="Buscar" />
+      <div class="toolbar__filtros" id="filtros" role="group" aria-label="Filtrar por categoría"></div>
+    </section>
+
+    <p class="resultado-count" id="contador"></p>
+
+    <section class="grid" id="grid"></section>
+
+    <p class="vacio" id="vacio" hidden>No encontramos objetos con ese criterio.</p>
+  </main>
+
+  <footer class="footer">
+    <p id="nota-precios"></p>
+    <p class="footer__small">Hecho para la mudanza Gorriti → Alvarez Thomas · 3dar</p>
+  </footer>
+
+  <!-- Plantilla de tarjeta -->
+  <template id="tpl-card">
+    <article class="card">
+      <div class="card__media" data-media>
+        <span class="card__badge" data-badge hidden></span>
+        <span class="card__media-count" data-media-count hidden></span>
+        <span class="card__media-zoom" aria-hidden="true">🔍</span>
+        <span class="card__media-ph">Foto próximamente</span>
+      </div>
+      <div class="card__body">
+        <span class="card__cat" data-cat></span>
+        <h2 class="card__title" data-nombre></h2>
+        <p class="card__modelo" data-modelo></p>
+        <ul class="card__componentes" data-componentes hidden></ul>
+        <p class="card__sala" data-sala></p>
+        <p class="card__coment" data-coment></p>
+        <p class="card__retiro" data-retiro></p>
+      </div>
+      <div class="card__footer">
+        <div class="card__precio">
+          <div class="card__precio-fila">
+            <span class="card__precio-ars" data-precio-ars></span>
+            <span class="card__precio-lista" data-precio-lista hidden></span>
+          </div>
+          <span class="card__precio-usd" data-precio-usd></span>
+          <span class="card__precio-unidad" data-precio-unidad></span>
+        </div>
+        <div class="card__oferta">
+          <span class="card__oferta-label">Ofertá tu precio <small>(negociá subiendo o bajando)</small></span>
+          <div class="card__oferta-control">
+            <button type="button" class="of-btn" data-of-menos aria-label="Bajar oferta">−</button>
+            <div class="of-input-wrap">
+              <span class="of-cur">$</span>
+              <input class="of-input" type="text" inputmode="numeric" data-of-input aria-label="Tu oferta en pesos" />
+            </div>
+            <button type="button" class="of-btn" data-of-mas aria-label="Subir oferta">+</button>
+          </div>
+          <span class="card__oferta-hint" data-of-hint></span>
+        </div>
+        <a class="btn-wpp" data-wpp target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24s8.24 3.7 8.24 8.24-3.7 8.24-8.24 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28"/></svg>
+          <span data-wpp-label>Ofertar por WhatsApp</span>
+        </a>
+      </div>
+    </article>
+  </template>
+
+  <!-- Lightbox / galería de producto -->
+  <div class="lb" id="lightbox" hidden>
+    <div class="lb__backdrop" data-lb-close></div>
+    <div class="lb__dialog" role="dialog" aria-modal="true" aria-label="Detalle del producto">
+      <button class="lb__close" data-lb-close aria-label="Cerrar">×</button>
+
+      <div class="lb__gallery">
+        <div class="lb__stage" data-lb-stage>
+          <button class="lb__nav lb__prev" data-lb-prev aria-label="Anterior">‹</button>
+          <div class="lb__imgwrap" data-lb-imgwrap>
+            <img class="lb__img" data-lb-img alt="" />
+          </div>
+          <button class="lb__nav lb__next" data-lb-next aria-label="Siguiente">›</button>
+          <span class="lb__counter" data-lb-counter></span>
+          <button class="lb__zoombtn" data-lb-zoom aria-label="Ampliar / lupa" title="Ampliar (lupa)">🔍</button>
+        </div>
+        <div class="lb__thumbs" data-lb-thumbs></div>
+      </div>
+
+      <aside class="lb__info">
+        <span class="card__cat" data-lb-cat></span>
+        <h2 class="lb__title" data-lb-title></h2>
+        <p class="lb__modelo" data-lb-modelo></p>
+        <ul class="card__componentes" data-lb-componentes hidden></ul>
+        <p class="lb__coment" data-lb-coment></p>
+        <p class="card__retiro" data-lb-retiro></p>
+        <div class="lb__precio">
+          <div class="card__precio-fila">
+            <span class="card__precio-ars" data-lb-precio-ars></span>
+            <span class="card__precio-lista" data-lb-precio-lista hidden></span>
+          </div>
+          <span class="card__precio-usd" data-lb-precio-usd></span>
+          <span class="card__precio-unidad" data-lb-precio-unidad hidden></span>
+        </div>
+        <a class="btn-wpp" data-lb-wpp target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24s8.24 3.7 8.24 8.24-3.7 8.24-8.24 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28"/></svg>
+          <span data-lb-wpp-label>Me interesa por WhatsApp</span>
+        </a>
+      </aside>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="data.js"></script>
+  <script src="data-source.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

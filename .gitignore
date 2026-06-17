@@ -1,0 +1,13 @@
+# Dependencias / build
+node_modules/
+.vercel/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# Secretos (por las dudas; las claves service_role nunca van al repo)
+.env
+.env.*

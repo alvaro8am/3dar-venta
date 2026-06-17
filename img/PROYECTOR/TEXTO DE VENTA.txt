@@ -1,0 +1,28 @@
+USADO.  Marca BenQ
+Modelo Projetor benq mx631st 3200 lúmens
+Conexiones de entrada HDMI
+Fuentes de luz Lámpara
+Relación de contraste 10000:1
+Conexiones de salida VGA
+Cables incluidos VGA
+Sistema de proyección DLP
+Resolución XGA (1024x768)
+Soporte de resolución VGA(640 x 480) a UXGA(1600 x 1200)
+Brillo (lúmenes ANSI) 3200 lúmenes ANSI
+Relación de contraste (FOFO) 13000:1
+Colores de pantalla 30 Bits (1,07 billion colores)
+Relación de aspecto nativa Nativo 4:3 (5 formatos seleccionables)
+Fuente de luz Lámpara
+Potencia en vatios de la fuente de luz 196W
+Vida de la fuente de luz* 4500/6000/6500/10000 Horas
+Compatibilidad
+Compatibilidad HDTV 480i, 480p, 576i, 567p, 720p, 1080i, 1080p
+Compatibilidad de video NTSC, PAL, SECAM
+Puertos:
+1x Entrada de PC D-Sub
+1x Salida de Monitor D-Sub
+1x Entra de video compuesto RCA
+1x Entrada de S-Video Mini DIN
+1x Entrada HDMI
+1x USB Tipo A
+1x USB Tipo Mini B
