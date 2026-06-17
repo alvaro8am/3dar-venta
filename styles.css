@@ -159,8 +159,8 @@ body {
 /* ---------- Grid ---------- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
 }
 .card {
   display: flex;
@@ -169,19 +169,33 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  transition: .18s;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
-.card:hover { background: var(--bg-card-hover); transform: translateY(-3px); box-shadow: var(--shadow); }
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+  border-color: #353a4a;
+}
 
 .card__media {
   position: relative;
-  height: 150px;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   background:
     repeating-linear-gradient(45deg, #1a1e29 0 12px, #181b25 12px 24px);
   border-bottom: 1px solid var(--border);
 }
-.card__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.card__media img {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+  transition: transform .5s cubic-bezier(.2,.6,.2,1), filter .25s ease;
+}
+.card:hover .card__media img { transform: scale(1.07); filter: brightness(1.04); }
+/* leve degradé abajo para que el contador/badge se lean sobre cualquier foto */
+.card__media::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 38%;
+  background: linear-gradient(transparent, rgba(0,0,0,.28));
+  pointer-events: none; opacity: .9;
+}
 .card__media-ph {
   position: absolute; inset: 0;
   display: grid; place-items: center;
@@ -190,15 +204,16 @@ body {
 .card__media.is-clickable { cursor: pointer; }
 .card__media-count {
   position: absolute;
-  bottom: 8px; right: 8px;
-  z-index: 1;
+  bottom: 10px; right: 10px;
+  z-index: 2;
   font-size: .74rem;
   font-weight: 700;
-  background: rgba(0,0,0,.6);
+  background: rgba(0,0,0,.55);
   color: #fff;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 999px;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
 .card__media-zoom {
   position: absolute;
@@ -307,13 +322,14 @@ body.no-scroll { overflow: hidden; }
   position: absolute;
   top: 10px;
   left: 10px;
-  z-index: 1;
+  z-index: 2;
   font-size: .74rem;
   font-weight: 800;
   letter-spacing: .03em;
   padding: 4px 10px;
   border-radius: 999px;
   color: #1a0f08;
+  box-shadow: 0 3px 10px rgba(0,0,0,.35);
 }
 .card__badge.is-desc { background: var(--accent); }
 .card__badge.is-combo { background: #7cc6ff; }
@@ -340,7 +356,7 @@ body.no-scroll { overflow: hidden; }
   font-size: .8rem;
 }
 
-.card__body { padding: 16px 16px 10px; flex: 1; }
+.card__body { padding: 18px 18px 12px; flex: 1; }
 .card__cat {
   display: inline-block;
   font-size: .72rem;
@@ -352,7 +368,7 @@ body.no-scroll { overflow: hidden; }
   border-radius: 6px;
   margin-bottom: 10px;
 }
-.card__title { margin: 0 0 4px; font-size: 1.1rem; letter-spacing: -.01em; }
+.card__title { margin: 0 0 4px; font-size: 1.18rem; letter-spacing: -.01em; line-height: 1.25; }
 .card__modelo { margin: 0 0 8px; color: var(--text-dim); font-size: .88rem; }
 .card__sala { margin: 0; color: var(--text-dim); font-size: .78rem; opacity: .75; }
 .card__sala::before { content: "📍 "; }
