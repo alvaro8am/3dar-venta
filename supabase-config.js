@@ -12,5 +12,5 @@
  * ========================================================================== */
 window.SUPABASE_CONFIG = {
   SUPABASE_URL: "https://uzulgidesbcttsvemmuj.supabase.co",
-  SUPABASE_ANON_KEY: "",  // ← falta: pegá acá la "anon public" (Project Settings → API)
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6dWxnaWRlc2JjdHRzdmVtbXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MTY3NDgsImV4cCI6MjA5NzI5Mjc0OH0.D3MR657CA_M4fvq0C6qdsZAvAhBcb3GBGLcHiulV1Ck",
 };
