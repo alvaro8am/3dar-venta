@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3dar · Venta de equipamiento</title>
   <meta name="description" content="Liquidación de equipamiento de oficina 3dar: mobiliario, hardware y electrodomésticos en venta." />
+  <link rel="icon" type="image/jpeg" href="LOGO.jpg" />
+  <link rel="apple-touch-icon" href="LOGO.jpg" />
   <link rel="preconnect" href="https://dolarapi.com" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -22,6 +24,28 @@
         <span class="hero__dolar-actualizado" id="dolar-actualizado"></span>
       </div>
     </div>
+
+    <div class="topbar__tools">
+      <input type="search" id="buscador" class="toolbar__search" placeholder="Buscar objeto, modelo o categoría…" aria-label="Buscar" />
+      <div class="topbar__filter">
+        <button type="button" class="filter-btn" id="btn-filtrar" aria-haspopup="true" aria-expanded="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>Filtrar</span>
+          <span class="filter-dot" id="filter-dot" hidden></span>
+        </button>
+        <div class="filter-menu" id="filter-menu" hidden>
+          <div class="filter-group">
+            <span class="filter-group__label">Sección</span>
+            <nav class="secciones" id="secciones" role="tablist" aria-label="Secciones"></nav>
+          </div>
+          <div class="filter-group">
+            <span class="filter-group__label">Categoría</span>
+            <div class="toolbar__filtros" id="filtros" role="group" aria-label="Filtrar por categoría"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <a class="hero__admin" href="admin.html" title="Ir al panel de administración">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="2"/></svg>
       <span>Panel</span>
@@ -30,13 +54,6 @@
   </header>
 
   <main class="container">
-    <div class="navrow">
-      <input type="search" id="buscador" class="toolbar__search" placeholder="Buscar objeto, modelo o categoría…" aria-label="Buscar" />
-      <nav class="secciones" id="secciones" role="tablist" aria-label="Secciones"></nav>
-    </div>
-
-    <div class="toolbar__filtros" id="filtros" role="group" aria-label="Filtrar por categoría"></div>
-
     <p class="seccion-desc" id="seccion-desc"></p>
 
     <p class="resultado-count" id="contador"></p>

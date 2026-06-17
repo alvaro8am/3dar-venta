@@ -45,13 +45,41 @@ body {
 .topbar__inner {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 13px 24px;
+  padding: 12px 24px;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
 }
-.topbar__brand { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.topbar__brand { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; flex: none; }
+
+/* Buscador + botón Filtrar dentro del topbar */
+.topbar__tools { display: flex; align-items: center; gap: 10px; flex: 1 1 340px; min-width: 0; }
+.topbar__tools .toolbar__search { flex: 1 1 160px; max-width: none; }
+.topbar__filter { position: relative; flex: none; }
+.filter-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: #fff; border: 1px solid var(--border); color: var(--text-dim);
+  border-radius: 999px; padding: 10px 16px; font-size: .88rem; font-weight: 500;
+  cursor: pointer; box-shadow: var(--shadow); transition: .15s ease; white-space: nowrap;
+}
+.filter-btn:hover { color: var(--text); border-color: var(--border-strong); }
+.filter-btn.open { color: var(--text); background: var(--bg-soft); }
+.filter-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.filter-menu {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 60;
+  background: #fff; border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: var(--shadow-hover); padding: 18px 18px 6px;
+  width: 320px; max-width: calc(100vw - 32px);
+}
+.filter-menu[hidden] { display: none; }
+.filter-group { margin-bottom: 16px; }
+.filter-group__label {
+  display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--text-faint); margin-bottom: 10px;
+}
+.filter-menu .secciones { justify-content: flex-start; gap: 8px; margin: 0; }
+.filter-menu .toolbar__filtros { margin: 0; }
 .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; }
 .brand-logo { height: 40px; width: auto; display: block; border-radius: 9px; }
 .brand-tag { font-size: .85rem; font-weight: 500; color: var(--text-dim); letter-spacing: -.01em; }
@@ -99,6 +127,11 @@ body {
   .hero__dolar-actualizado { display: none; }
   .brand-logo { height: 34px; }
   .brand-tag { display: none; }
+}
+@media (max-width: 720px) {
+  .topbar__brand { flex: 1 1 auto; }
+  .hero__admin { order: 1; }
+  .topbar__tools { order: 2; flex-basis: 100%; }
 }
 
 /* ---------- Layout ---------- */

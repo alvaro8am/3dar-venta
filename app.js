@@ -156,8 +156,10 @@ function construirSecciones() {
 function construirFiltros() {
   const cont = $("#filtros");
   cont.innerHTML = "";
+  const grupo = cont.closest(".filter-group");
   // Los filtros por categoría solo aplican a la sección "Todo".
-  if (state.seccion !== "todo") return;
+  if (state.seccion !== "todo") { if (grupo) grupo.hidden = true; return; }
+  if (grupo) grupo.hidden = false;
   const cats = ["Todas", ...Array.from(new Set(itemsDeSeccion("todo").map((i) => i.categoria))).sort()];
   cats.forEach((cat) => {
     const btn = document.createElement("button");
@@ -177,6 +179,32 @@ function bindEventos() {
     state.busqueda = e.target.value.trim().toLowerCase();
     render();
   });
+
+  // Menú desplegable "Filtrar"
+  const btnF = $("#btn-filtrar");
+  const menu = $("#filter-menu");
+  if (btnF && menu) {
+    btnF.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const abrir = menu.hidden;
+      menu.hidden = !abrir;
+      btnF.classList.toggle("open", abrir);
+      btnF.setAttribute("aria-expanded", String(abrir));
+    });
+    document.addEventListener("click", (e) => {
+      if (menu.hidden) return;
+      if (!menu.contains(e.target) && !btnF.contains(e.target)) {
+        menu.hidden = true;
+        btnF.classList.remove("open");
+        btnF.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+}
+
+function actualizarBotonFiltro() {
+  const dot = $("#filter-dot");
+  if (dot) dot.hidden = !(state.seccion !== "todo" || state.categoria !== "Todas");
 }
 
 function itemsFiltrados() {
@@ -199,6 +227,7 @@ function render() {
   const grid = $("#grid");
   const lista = itemsFiltrados();
   grid.innerHTML = "";
+  actualizarBotonFiltro();
 
   const sust = state.seccion === "combos" ? "combo" : "objeto";
   $("#vacio").hidden = lista.length > 0;
