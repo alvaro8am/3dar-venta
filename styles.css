@@ -52,7 +52,9 @@ body {
   gap: 16px;
 }
 .topbar__brand { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-.brand { font-size: .9rem; font-weight: 600; letter-spacing: .005em; color: var(--text); }
+.brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; }
+.brand-logo { height: 40px; width: auto; display: block; border-radius: 9px; }
+.brand-tag { font-size: .85rem; font-weight: 500; color: var(--text-dim); letter-spacing: -.01em; }
 
 .hero__dolar {
   display: inline-flex;
@@ -95,7 +97,8 @@ body {
   .hero__admin span { display: none; }
   .hero__dolar { padding: 6px 11px; font-size: .74rem; gap: 7px; }
   .hero__dolar-actualizado { display: none; }
-  .brand { font-size: .82rem; }
+  .brand-logo { height: 34px; }
+  .brand-tag { display: none; }
 }
 
 /* ---------- Layout ---------- */
