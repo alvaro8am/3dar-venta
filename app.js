@@ -235,6 +235,7 @@ function render() {
   let lista = itemsFiltrados();
   if (state.orden === "precio-asc") lista = lista.slice().sort((a, b) => precioARS(a) - precioARS(b));
   else if (state.orden === "precio-desc") lista = lista.slice().sort((a, b) => precioARS(b) - precioARS(a));
+  else lista = lista.slice().sort((a, b) => (esCombo(b) ? 1 : 0) - (esCombo(a) ? 1 : 0)); // combos primero
   grid.innerHTML = "";
   actualizarBotonFiltro();
 
@@ -333,70 +334,25 @@ function render() {
       badge.remove();
     }
 
-    // Oferta negociable: arranca en el precio publicado. Si el usuario aún no la
-    // tocó, sigue al precio publicado (que puede cambiar al actualizarse el dólar).
-    if (state.ofertas[it.id] == null || !state.ofertaTocada[it.id]) {
-      state.ofertas[it.id] = ars;
-    }
-    const paso = pasoOferta(ars);
+    // WhatsApp (precio publicado, sin negociación).
     const wppLabel = node.querySelector("[data-wpp-label]");
-    const a = node.querySelector("[data-wpp]");
-    const input = node.querySelector("[data-of-input]");
-    const hint = node.querySelector("[data-of-hint]");
-
-    const sincronizar = () => {
-      const oferta = state.ofertas[it.id];
-      input.value = fmtNum(oferta);
-      // Diferencia respecto del precio publicado.
-      if (oferta === ars) {
-        hint.textContent = "= precio publicado";
-        hint.className = "card__oferta-hint";
-      } else {
-        const dif = Math.round(((oferta - ars) / ars) * 100);
-        const signo = oferta > ars ? "+" : "−";
-        hint.textContent = `${signo}${Math.abs(dif)}% vs. publicado`;
-        hint.className = "card__oferta-hint " + (oferta > ars ? "is-up" : "is-down");
-      }
-      wppLabel.textContent = oferta === ars ? "Me interesa por WhatsApp" : "Ofertar por WhatsApp";
-      a.href = linkWpp(it, ars, oferta);
-    };
-
-    const setOferta = (val) => {
-      state.ofertas[it.id] = Math.max(0, Math.round(val));
-      state.ofertaTocada[it.id] = true;
-      sincronizar();
-    };
-
-    node.querySelector("[data-of-menos]").addEventListener("click", () =>
-      setOferta(state.ofertas[it.id] - paso));
-    node.querySelector("[data-of-mas]").addEventListener("click", () =>
-      setOferta(state.ofertas[it.id] + paso));
-    input.addEventListener("input", () => {
-      const digits = input.value.replace(/[^\d]/g, "");
-      state.ofertas[it.id] = digits ? Number(digits) : 0;
-      state.ofertaTocada[it.id] = true;
-      a.href = linkWpp(it, ars, state.ofertas[it.id]);
-    });
-    input.addEventListener("blur", sincronizar);
-
-    sincronizar();
+    if (wppLabel) wppLabel.textContent = "Me interesa por WhatsApp";
+    node.querySelector("[data-wpp]").href = linkWpp(it, ars);
 
     grid.appendChild(node);
   });
 }
 
-function linkWpp(it, ars, oferta) {
+function linkWpp(it, ars) {
   const num = (state.config.whatsappNumero || "").replace(/[^\d]/g, "");
-  const ofreceDistinto = oferta != null && oferta > 0 && oferta !== ars;
   const partes = [
     `Hola! Me interesa este objeto de la venta de 3dar:`,
     ``,
     `• ${it.nombre}`,
     it.modelo && it.modelo !== "—" ? `• Modelo: ${it.modelo}` : null,
     `• Precio publicado: ${fmtARS(ars)}${it.unidades > 1 ? " c/u" : ""}`,
-    ofreceDistinto ? `• Mi oferta: ${fmtARS(oferta)}${it.unidades > 1 ? " c/u" : ""}` : null,
     ``,
-    ofreceDistinto ? `¿Lo podemos arreglar a ese precio?` : `¿Sigue disponible?`,
+    `¿Sigue disponible?`,
     state.config.retiro ? `(${state.config.retiro})` : null,
   ].filter(Boolean);
   const texto = encodeURIComponent(partes.join("\n"));
@@ -444,10 +400,9 @@ function abrirLightbox(it, fotos) {
   else if (esDescuento(it)) { uniEl.hidden = false; uniEl.textContent = `Ahorrás ${pctDescuento(it)}%`; }
   else uniEl.hidden = true;
 
-  const oferta = state.ofertas[it.id];
   const a = $("[data-lb-wpp]");
-  a.href = linkWpp(it, ars, oferta);
-  $("[data-lb-wpp-label]").textContent = (oferta && oferta !== ars) ? "Ofertar por WhatsApp" : "Me interesa por WhatsApp";
+  a.href = linkWpp(it, ars);
+  $("[data-lb-wpp-label]").textContent = "Me interesa por WhatsApp";
 
   const thumbs = $("[data-lb-thumbs]");
   thumbs.innerHTML = "";
