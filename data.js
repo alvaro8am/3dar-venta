@@ -1,7 +1,7 @@
 /* GENERADO por generar-data.js — no editar a mano; editá el generador. */
 window.SITE_DATA = {
   "config": {
-    "titulo": "3dar · Liquidación de equipamiento",
+    "titulo": "Liquidación de equipamiento",
     "subtitulo": "Muebles, sillas, electrodomésticos y tecnología en venta. Se retira por baulera en Av. Elcano y Fraga (CABA).",
     "whatsappNumero": "5491161995651",
     "whatsappNota": "Número de contacto de la venta (código país sin + ni espacios).",
