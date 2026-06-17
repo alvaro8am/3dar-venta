@@ -11,3 +11,5 @@ desktop.ini
 # Secretos (por las dudas; las claves service_role nunca van al repo)
 .env
 .env.*
+
+.vercel

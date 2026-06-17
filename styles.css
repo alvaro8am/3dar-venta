@@ -24,8 +24,31 @@ body {
 
 /* ---------- Hero ---------- */
 .hero {
+  position: relative;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(180deg, rgba(255,122,61,.08), transparent);
+}
+.hero__admin {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 8px 15px;
+  font-size: .85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: .15s;
+}
+.hero__admin:hover { color: var(--text); border-color: var(--accent); }
+@media (max-width: 520px) {
+  .hero__admin { padding: 7px 11px; }
+  .hero__admin span { display: none; }
 }
 .hero__inner {
   max-width: 1100px;
