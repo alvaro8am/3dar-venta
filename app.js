@@ -12,6 +12,7 @@ const state = {
   seccion: "todo",
   categoria: "Todas",
   busqueda: "",
+  orden: "destacados", // destacados | precio-asc | precio-desc
   ofertas: {},        // { [id]: monto ARS ofertado por el usuario }
   ofertaTocada: {},   // { [id]: true } si el usuario ya modificó la oferta
 };
@@ -123,7 +124,7 @@ function pintarDolar(valor, fecha, live) {
 function itemsDeSeccion(seccionId) {
   if (seccionId === "combos") return state.items.filter(esCombo);
   if (seccionId === "descuentos") return state.items.filter((it) => !esCombo(it) && esDescuento(it));
-  return state.items.filter((it) => !esCombo(it)); // "todo"
+  return state.items; // "todo" → todo, combos incluidos
 }
 
 function construirSecciones() {
@@ -160,7 +161,10 @@ function construirFiltros() {
   // Los filtros por categoría solo aplican a la sección "Todo".
   if (state.seccion !== "todo") { if (grupo) grupo.hidden = true; return; }
   if (grupo) grupo.hidden = false;
-  const cats = ["Todas", ...Array.from(new Set(itemsDeSeccion("todo").map((i) => i.categoria))).sort()];
+  // Categorías de los productos sueltos (los combos tienen su propia pestaña).
+  const cats = ["Todas", ...Array.from(new Set(
+    state.items.filter((i) => !esCombo(i)).map((i) => i.categoria)
+  )).filter((c) => c !== "Combos").sort()];
   cats.forEach((cat) => {
     const btn = document.createElement("button");
     btn.className = "chip" + (cat === state.categoria ? " active" : "");
@@ -179,6 +183,9 @@ function bindEventos() {
     state.busqueda = e.target.value.trim().toLowerCase();
     render();
   });
+
+  const ordenSel = $("#orden-precio");
+  if (ordenSel) ordenSel.addEventListener("change", (e) => { state.orden = e.target.value; render(); });
 
   // Menú desplegable "Filtrar"
   const btnF = $("#btn-filtrar");
@@ -204,7 +211,7 @@ function bindEventos() {
 
 function actualizarBotonFiltro() {
   const dot = $("#filter-dot");
-  if (dot) dot.hidden = !(state.seccion !== "todo" || state.categoria !== "Todas");
+  if (dot) dot.hidden = !(state.seccion !== "todo" || state.categoria !== "Todas" || state.orden !== "destacados");
 }
 
 function itemsFiltrados() {
@@ -225,7 +232,9 @@ function precioARS(it) {
 
 function render() {
   const grid = $("#grid");
-  const lista = itemsFiltrados();
+  let lista = itemsFiltrados();
+  if (state.orden === "precio-asc") lista = lista.slice().sort((a, b) => precioARS(a) - precioARS(b));
+  else if (state.orden === "precio-desc") lista = lista.slice().sort((a, b) => precioARS(b) - precioARS(a));
   grid.innerHTML = "";
   actualizarBotonFiltro();
 
@@ -242,6 +251,7 @@ function render() {
     const node = tpl.content.cloneNode(true);
     const ars = precioARS(it);
 
+    if (esCombo(it)) node.querySelector(".card").classList.add("card--combo");
     node.querySelector("[data-cat]").textContent = it.categoria;
     node.querySelector("[data-nombre]").textContent = it.nombre;
     node.querySelector("[data-modelo]").textContent = it.modelo && it.modelo !== "—" ? it.modelo : "";

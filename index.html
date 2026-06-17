@@ -35,6 +35,14 @@
         </button>
         <div class="filter-menu" id="filter-menu" hidden>
           <div class="filter-group">
+            <span class="filter-group__label">Ordenar por</span>
+            <select id="orden-precio" class="filter-select" aria-label="Ordenar por precio">
+              <option value="destacados">Destacados</option>
+              <option value="precio-asc">Precio: más barato primero</option>
+              <option value="precio-desc">Precio: más caro primero</option>
+            </select>
+          </div>
+          <div class="filter-group">
             <span class="filter-group__label">Sección</span>
             <nav class="secciones" id="secciones" role="tablist" aria-label="Secciones"></nav>
           </div>

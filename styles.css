@@ -80,6 +80,11 @@ body {
 }
 .filter-menu .secciones { justify-content: flex-start; gap: 8px; margin: 0; }
 .filter-menu .toolbar__filtros { margin: 0; }
+.filter-select {
+  width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px 12px; font-size: .88rem; color: var(--text); cursor: pointer; font-family: inherit;
+}
+.filter-select:focus { border-color: var(--border-strong); outline: none; }
 .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; }
 .brand-logo { height: 40px; width: auto; display: block; border-radius: 9px; }
 .brand-tag { font-size: .85rem; font-weight: 500; color: var(--text-dim); letter-spacing: -.01em; }
@@ -230,6 +235,9 @@ body {
   transition: transform .25s ease, box-shadow .25s ease;
 }
 .card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
+/* Combos destacados con un acento azul */
+.card--combo { border-color: #c4dcf3; box-shadow: 0 8px 26px rgba(47,109,176,.12); }
+.card--combo:hover { border-color: #9cc2e8; box-shadow: 0 18px 50px rgba(47,109,176,.20); }
 
 .card__media {
   position: relative;
