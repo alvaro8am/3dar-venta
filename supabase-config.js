@@ -11,6 +11,6 @@
  *  (las carpetas), así no se rompe nada durante la transición.
  * ========================================================================== */
 window.SUPABASE_CONFIG = {
-  SUPABASE_URL: "",       // ej: https://abcdefgh.supabase.co
-  SUPABASE_ANON_KEY: "",  // ej: eyJhbGciOi...
+  SUPABASE_URL: "https://uzulgidesbcttsvemmuj.supabase.co",
+  SUPABASE_ANON_KEY: "",  // ← falta: pegá acá la "anon public" (Project Settings → API)
 };
