@@ -55,10 +55,13 @@ async function init() {
   state.config = data.config || {};
   state.items = data.items || [];
 
-  $("#titulo").textContent = state.config.titulo || "Venta de equipamiento";
-  $("#subtitulo").textContent = state.config.subtitulo || "";
+  const tituloEl = $("#titulo");
+  if (tituloEl) tituloEl.textContent = state.config.titulo || "Venta de equipamiento";
+  const subEl = $("#subtitulo");
+  if (subEl) subEl.textContent = state.config.subtitulo || "";
   document.title = state.config.titulo || document.title;
-  $("#nota-precios").textContent = state.config.notaPrecios || "";
+  const notaEl = $("#nota-precios");
+  if (notaEl) notaEl.textContent = state.config.notaPrecios || "";
 
   // Render inmediato con dólar de respaldo (no depende de la red).
   state.dolar = Number(state.config.dolarFallback) || 1000;
