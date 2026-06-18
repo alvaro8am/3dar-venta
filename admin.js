@@ -118,8 +118,8 @@ function abrirProd(p) {
   editando = p
     ? { ...p, fotos: Array.isArray(p.fotos) ? [...p.fotos] : [] }
     : { id: crypto.randomUUID(), nombre: "", categoria: "", modelo: "", precio_usd: 0,
-        precio_lista_usd: null, unidades: 1, orden: 100, tipo: null, componentes: [],
-        comentario: "", publicado: true, fotos: [], _nuevo: true };
+        precio_lista_usd: null, precio_nuevo_ars: null, link_nuevo: "", unidades: 1, orden: 100,
+        tipo: null, componentes: [], comentario: "", publicado: true, fotos: [], _nuevo: true };
 
   $("#prod-modal-titulo").textContent = p ? "Editar producto" : "Nuevo producto";
   $("#f-nombre").value = editando.nombre || "";
@@ -127,6 +127,8 @@ function abrirProd(p) {
   $("#f-modelo").value = editando.modelo || "";
   $("#f-precio").value = editando.precio_usd ?? 0;
   $("#f-lista").value = editando.precio_lista_usd ?? "";
+  $("#f-nuevo").value = editando.precio_nuevo_ars ?? "";
+  $("#f-link-nuevo").value = editando.link_nuevo || "";
   $("#f-unidades").value = editando.unidades ?? 1;
   $("#f-orden").value = editando.orden ?? 100;
   $("#f-combo").checked = editando.tipo === "combo";
@@ -212,6 +214,8 @@ async function guardarProd() {
     modelo: $("#f-modelo").value.trim(),
     precio_usd: Number($("#f-precio").value) || 0,
     precio_lista_usd: $("#f-lista").value !== "" ? Number($("#f-lista").value) : null,
+    precio_nuevo_ars: $("#f-nuevo").value !== "" ? Number($("#f-nuevo").value) : null,
+    link_nuevo: $("#f-link-nuevo").value.trim(),
     unidades: Number($("#f-unidades").value) || 1,
     orden: Number($("#f-orden").value) || 100,
     tipo: combo ? "combo" : null,

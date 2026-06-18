@@ -315,6 +315,15 @@ body {
 .card__precio-lista { font-size: .92rem; color: var(--text-faint); text-decoration: line-through; }
 .card__precio-usd { font-size: .78rem; color: var(--text-faint); }
 .card__precio-unidad { font-size: .74rem; color: var(--accent); margin-top: 3px; font-weight: 600; }
+.card__nuevo {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 6px; padding: 3px 9px; border-radius: 999px;
+  font-size: .72rem; font-weight: 600; line-height: 1.2;
+  color: #2f6db0; background: #eef4fb; border: 1px solid #d7e6f6;
+  text-decoration: none; width: fit-content; transition: background .15s, border-color .15s;
+}
+.card__nuevo:hover { background: #e2eefa; border-color: #c4dcf3; }
+.card__nuevo--nolink { pointer-events: none; }
 
 /* Oferta negociable */
 .card__oferta { display: flex; flex-direction: column; gap: 7px; }

@@ -14,12 +14,18 @@ create table if not exists public.productos (
   unidades        int not null default 1,
   precio_usd      numeric not null default 0,
   precio_lista_usd numeric,                            -- opcional → activa "Descuento"
+  precio_nuevo_ars numeric,                            -- opcional → precio de referencia "a nuevo" (ARS)
+  link_nuevo      text default '',                     -- opcional → link a la publicación del producto nuevo
   comentario      text default '',
   tipo            text,                                -- null = normal, 'combo' = combo
   componentes     jsonb not null default '[]'::jsonb,  -- lista de strings (combos)
   fotos           jsonb not null default '[]'::jsonb,  -- lista de URLs públicas
   publicado       boolean not null default true
 );
+
+-- 1b) Migración para bases ya creadas (agrega las columnas si faltan) ----------
+alter table public.productos add column if not exists precio_nuevo_ars numeric;
+alter table public.productos add column if not exists link_nuevo text default '';
 
 -- 2) Tabla de configuración del sitio (una sola fila) ------------------------
 create table if not exists public.config (

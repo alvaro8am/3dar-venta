@@ -13,6 +13,8 @@ function mapProducto(r) {
     unidades: r.unidades || 1,
     precioUSD: Number(r.precio_usd) || 0,
     precioListaUSD: r.precio_lista_usd != null ? Number(r.precio_lista_usd) : undefined,
+    precioNuevoARS: r.precio_nuevo_ars != null ? Number(r.precio_nuevo_ars) : undefined,
+    linkNuevo: r.link_nuevo || "",
     comentario: r.comentario || "",
     tipo: r.tipo || undefined,
     componentes: Array.isArray(r.componentes) ? r.componentes : [],

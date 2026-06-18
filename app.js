@@ -230,6 +230,25 @@ function precioARS(it) {
   return Math.round(it.precioUSD * state.dolar);
 }
 
+// Precio "a nuevo": referencia de cuánto sale el producto nuevo + link a esa publicación.
+function pintarNuevo(el, it, ars) {
+  if (!el) return;
+  const nuevo = Number(it.precioNuevoARS);
+  if (!nuevo || isNaN(nuevo) || nuevo <= 0) { el.hidden = true; return; }
+  const pct = ars > 0 ? Math.round((1 - ars / nuevo) * 100) : 0;
+  el.textContent = `🆕 Nuevo: ${fmtARS(nuevo)}` + (pct > 0 ? ` · ahorrás ${pct}%` : "") + (it.linkNuevo ? " ↗" : "");
+  if (it.linkNuevo) {
+    el.href = it.linkNuevo;
+    el.classList.remove("card__nuevo--nolink");
+    el.removeAttribute("aria-disabled");
+  } else {
+    el.removeAttribute("href");
+    el.classList.add("card__nuevo--nolink");
+    el.setAttribute("aria-disabled", "true");
+  }
+  el.hidden = false;
+}
+
 function render() {
   const grid = $("#grid");
   let lista = itemsFiltrados();
@@ -296,6 +315,8 @@ function render() {
     if (it.unidades > 1) unidadEl.textContent = `c/u · ${it.unidades} disponibles`;
     else if (esDescuento(it)) unidadEl.textContent = `Ahorrás ${pctDescuento(it)}%`;
     else unidadEl.remove();
+
+    pintarNuevo(node.querySelector("[data-nuevo]"), it, ars);
 
     // Galería: foto principal + acceso al lightbox al clickear.
     const media = node.querySelector("[data-media]");
@@ -399,6 +420,8 @@ function abrirLightbox(it, fotos) {
   if (it.unidades > 1) { uniEl.hidden = false; uniEl.textContent = `c/u · ${it.unidades} disponibles`; }
   else if (esDescuento(it)) { uniEl.hidden = false; uniEl.textContent = `Ahorrás ${pctDescuento(it)}%`; }
   else uniEl.hidden = true;
+
+  pintarNuevo($("[data-lb-nuevo]"), it, ars);
 
   const a = $("[data-lb-wpp]");
   a.href = linkWpp(it, ars);
