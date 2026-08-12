@@ -10,7 +10,15 @@
  *  Mientras estos valores estén vacíos, el sitio sigue funcionando con data.js
  *  (las carpetas), así no se rompe nada durante la transición.
  * ========================================================================== */
+/* ⚠️ TEMPORALMENTE DESCONECTADO (12/08/2026)
+ * El proyecto de Supabase estaba pausado y sólo tiene los 21 productos viejos.
+ * Mientras se lo restaura y se le migran los 73 actuales, se deja vacío para
+ * que el sitio siga sirviendo data.js y el catálogo no se vea incompleto.
+ * Al terminar la migración se vuelven a poner estos dos valores:
+ *   SUPABASE_URL:      https://uzulgidesbcttsvemmuj.supabase.co
+ *   SUPABASE_ANON_KEY: (Project Settings → API → anon public)
+ */
 window.SUPABASE_CONFIG = {
-  SUPABASE_URL: "https://uzulgidesbcttsvemmuj.supabase.co",
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6dWxnaWRlc2JjdHRzdmVtbXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MTY3NDgsImV4cCI6MjA5NzI5Mjc0OH0.D3MR657CA_M4fvq0C6qdsZAvAhBcb3GBGLcHiulV1Ck",
+  SUPABASE_URL: "",
+  SUPABASE_ANON_KEY: "",
 };
