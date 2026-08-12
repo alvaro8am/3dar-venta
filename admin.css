@@ -33,8 +33,9 @@ label.check input { width: auto; }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn-primary:hover { filter: brightness(1.07); }
 .btn-ghost { background: transparent; }
-.btn-google { background: #fff; color: #3c4043; border-color: #dadce0; justify-content: center; }
-.btn-google:hover { background: #f3f4f5; border-color: #c9ccd1; filter: none; }
+/* Login del panel (email + contraseña) */
+#form-login { display: flex; flex-direction: column; gap: 12px; }
+#form-login #btn-entrar { justify-content: center; margin-top: 4px; }
 .btn-danger-ghost { background: transparent; border-color: #e7cccc; color: #b3261e; }
 .btn-danger-ghost:hover { background: #faecec; border-color: #d9a8a8; }
 

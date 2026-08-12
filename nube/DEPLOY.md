@@ -1,5 +1,15 @@
 # 🚀 Publicar online: GitHub + Vercel + Supabase + Login Google
 
+> ## ⚠️ DOCUMENTO DESACTUALIZADO — no lo sigas
+>
+> Se conserva sólo como referencia histórica.
+>
+> - **GitHub y Vercel ya están conectados** (12/08/2026). Cada push a `main` publica solo.
+> - **El "Paso 4 · Configurar Login con Google" ya no aplica.** El panel ahora entra con
+>   **email y contraseña**, sin Google Cloud ni OAuth.
+> - El Supabase original fue eliminado. Para rehacerlo, seguí **`SETUP-NUBE.md`**,
+>   que es la guía vigente.
+
 El código ya está listo y commiteado en git. Falta conectar tus cuentas.
 Seguí los pasos **en este orden** (cada uno te da un dato que el siguiente necesita).
 

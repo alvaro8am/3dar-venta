@@ -41,10 +41,15 @@ create table if not exists public.config (
 );
 insert into public.config (id) values (1) on conflict (id) do nothing;
 
--- 2b) Lista de administradores (login con Google restringido a estos emails) ---
+-- 2b) Lista de administradores (el login del panel solo acepta estos emails) ---
 create table if not exists public.admins ( email text primary key );
--- ⬇⬇ CAMBIÁ esto por tu Gmail / email de Google real (con el que vas a entrar):
-insert into public.admins (email) values ('alvaro@3dar.com') on conflict do nothing;
+-- ⬇⬇ Emails habilitados para entrar al panel. Tienen que coincidir EXACTAMENTE
+--    con los usuarios que crees en Authentication → Users (en minúscula).
+--    Agregá o sacá los que quieras.
+insert into public.admins (email) values
+  ('alvaro@3dar.com'),
+  ('lucila@3dar.com')
+on conflict do nothing;
 -- RLS sin policies → la tabla NO es accesible por la API; solo la usa la función de abajo.
 alter table public.admins enable row level security;
 

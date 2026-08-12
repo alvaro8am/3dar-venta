@@ -23,7 +23,7 @@ async function arrancar() {
   if (session) await checkAdminYEntrar(); else show("#login");
 }
 
-/* ---------------- Auth (Google) ---------------- */
+/* ---------------- Auth (email + contraseña) ---------------- */
 async function checkAdminYEntrar() {
   const { data: ok, error } = await sb.rpc("es_admin");
   if (error || !ok) {
@@ -37,14 +37,42 @@ async function checkAdminYEntrar() {
   entrarApp();
 }
 
+/* Traduce los errores de Supabase a algo que se entienda. */
+function mensajeDeError(msg) {
+  const m = String(msg || "");
+  if (/Invalid login credentials/i.test(m)) return "Email o contraseña incorrectos.";
+  if (/Email not confirmed/i.test(m)) return "El usuario existe pero no está confirmado. En Supabase → Authentication → Users, confirmalo.";
+  if (/Failed to fetch|NetworkError|ERR_NAME_NOT_RESOLVED/i.test(m))
+    return "No se pudo conectar con el servidor. Puede que el proyecto de Supabase no exista o esté pausado, o que supabase-config.js tenga la URL mal.";
+  if (/rate limit|Too many/i.test(m)) return "Demasiados intentos seguidos. Esperá un minuto y probá de nuevo.";
+  return m;
+}
+
 function bindEventos() {
-  $("#btn-google").addEventListener("click", async () => {
-    $("#login-error").hidden = true;
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: location.origin + location.pathname },
-    });
-    if (error) { $("#login-error").textContent = error.message; $("#login-error").hidden = false; }
+  $("#form-login").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("#login-error");
+    const btn = $("#btn-entrar");
+    err.hidden = true;
+    btn.disabled = true;
+    const textoOriginal = btn.textContent;
+    btn.textContent = "Entrando…";
+    try {
+      const { error } = await sb.auth.signInWithPassword({
+        email: $("#login-email").value.trim(),
+        password: $("#login-pass").value,
+      });
+      if (error) {
+        err.textContent = mensajeDeError(error.message);
+        err.hidden = false;
+        return;
+      }
+      $("#login-pass").value = "";
+      await checkAdminYEntrar();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
   });
   $("#btn-salir").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
   $("#btn-salir-noauth").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
