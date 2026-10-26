@@ -110,8 +110,26 @@ label.check input { width: auto; }
 .adm-row__sold { background: var(--bg-soft); }
 .adm-row__sold .adm-row__thumb { opacity: .55; }
 .adm-row__sold .adm-row__nombre { color: var(--text-dim); }
-.adm-row__monto { font-size: .92rem; font-weight: 600; white-space: nowrap; }
+.adm-row__monto {
+  font-size: .92rem; font-weight: 600; white-space: nowrap;
+  display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25;
+}
+.adm-row__monto small { font-size: .72rem; font-weight: 400; color: var(--text-dim); }
 .adm-row__pill.sold { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* Monto + moneda en un mismo control */
+.input-moneda { display: flex; gap: 6px; }
+.input-moneda input { flex: 1; min-width: 0; }
+.input-moneda select { flex: none; width: auto; padding-right: 8px; }
+
+/* Equivalencia entre monedas, debajo del campo */
+.conv-hint {
+  margin: -4px 0 0; font-size: .78rem; color: var(--text-dim);
+  background: var(--bg-soft); border-radius: 8px; padding: 7px 11px;
+}
+
+/* El display: flex de label le gana al [hidden], igual que en .btn */
+label[hidden], p[hidden] { display: none; }
 
 /* Modal de venta */
 .modal__box--sm { width: min(520px, 100%); }

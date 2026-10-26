@@ -25,9 +25,16 @@ const SECCIONES = [
 ];
 
 const esCombo = (it) => it.tipo === "combo";
-const esDescuento = (it) => Number(it.precioListaUSD) > Number(it.precioUSD);
-const pctDescuento = (it) =>
-  Math.round((1 - Number(it.precioUSD) / Number(it.precioListaUSD)) * 100);
+// El descuento se mide en pesos, así da igual si el precio está fijado en
+// dólares o en pesos: en los dos casos se comparan valores comparables.
+const esDescuento = (it) => {
+  const lista = precioListaARS(it);
+  return lista != null && lista > precioARS(it);
+};
+const pctDescuento = (it) => {
+  const lista = precioListaARS(it);
+  return lista ? Math.round((1 - precioARS(it) / lista) * 100) : 0;
+};
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -226,8 +233,26 @@ function itemsFiltrados() {
   });
 }
 
+/* ---- Precio del item ------------------------------------------------------
+ * El precio puede estar fijado en dólares (se convierte con la cotización del
+ * día, como siempre) o en pesos (valor fijo, no se mueve con el dólar).
+ */
 function precioARS(it) {
-  return Math.round(it.precioUSD * state.dolar);
+  if (it.moneda === "ARS") return Math.round(Number(it.precioARS) || 0);
+  return Math.round(Number(it.precioUSD) * state.dolar);
+}
+
+// Precio de lista (el tachado) en ARS. null si el producto no tiene.
+function precioListaARS(it) {
+  if (it.moneda === "ARS")
+    return it.precioListaARS != null ? Math.round(Number(it.precioListaARS)) : null;
+  return it.precioListaUSD != null ? Math.round(Number(it.precioListaUSD) * state.dolar) : null;
+}
+
+// El "≈ US$ …" que acompaña al precio en pesos.
+function precioUSDAprox(it) {
+  if (it.moneda === "ARS") return state.dolar ? (Number(it.precioARS) || 0) / state.dolar : 0;
+  return Number(it.precioUSD) || 0;
 }
 
 // Precio "a nuevo": referencia de cuánto sale el producto nuevo + link a esa publicación.
@@ -300,13 +325,13 @@ function render() {
     else retiroEl.remove();
 
     node.querySelector("[data-precio-ars]").textContent = fmtARS(ars);
-    node.querySelector("[data-precio-usd]").textContent = "≈ " + fmtUSD(it.precioUSD);
+    node.querySelector("[data-precio-usd]").textContent = "≈ " + fmtUSD(precioUSDAprox(it));
 
     // Precio de lista tachado (descuentos y combos con ahorro).
     const listaEl = node.querySelector("[data-precio-lista]");
     if (esDescuento(it)) {
       listaEl.hidden = false;
-      listaEl.textContent = fmtARS(Math.round(it.precioListaUSD * state.dolar));
+      listaEl.textContent = fmtARS(precioListaARS(it));
     } else {
       listaEl.remove();
     }
@@ -412,9 +437,9 @@ function abrirLightbox(it, fotos) {
   else retiroEl.hidden = true;
 
   $("[data-lb-precio-ars]").textContent = fmtARS(ars);
-  $("[data-lb-precio-usd]").textContent = "≈ " + fmtUSD(it.precioUSD);
+  $("[data-lb-precio-usd]").textContent = "≈ " + fmtUSD(precioUSDAprox(it));
   const listaEl = $("[data-lb-precio-lista]");
-  if (esDescuento(it)) { listaEl.hidden = false; listaEl.textContent = fmtARS(Math.round(it.precioListaUSD * state.dolar)); }
+  if (esDescuento(it)) { listaEl.hidden = false; listaEl.textContent = fmtARS(precioListaARS(it)); }
   else listaEl.hidden = true;
   const uniEl = $("[data-lb-precio-unidad]");
   if (it.unidades > 1) { uniEl.hidden = false; uniEl.textContent = `c/u · ${it.unidades} disponibles`; }

@@ -11,8 +11,13 @@ function mapProducto(r) {
     modelo: r.modelo || "",
     categoria: r.categoria || "Otros",
     unidades: r.unidades || 1,
+    // Moneda en la que está fijado el precio. 'ARS' = precio en pesos fijo,
+    // que no se mueve con el dólar. Si la columna no existe todavía, 'USD'.
+    moneda: r.moneda === "ARS" ? "ARS" : "USD",
     precioUSD: Number(r.precio_usd) || 0,
+    precioARS: r.precio_ars != null ? Number(r.precio_ars) : undefined,
     precioListaUSD: r.precio_lista_usd != null ? Number(r.precio_lista_usd) : undefined,
+    precioListaARS: r.precio_lista_ars != null ? Number(r.precio_lista_ars) : undefined,
     precioNuevoARS: r.precio_nuevo_ars != null ? Number(r.precio_nuevo_ars) : undefined,
     linkNuevo: r.link_nuevo || "",
     comentario: r.comentario || "",

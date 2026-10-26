@@ -75,8 +75,15 @@
           <datalist id="cats"></datalist>
         </label>
         <label>Modelo / medidas<input id="f-modelo" type="text" /></label>
-        <label>Precio (USD) *<input id="f-precio" type="number" min="0" step="1" /></label>
-        <label>Precio lista USD <small>(opcional → Descuento)</small><input id="f-lista" type="number" min="0" step="1" /></label>
+        <label>Moneda del precio
+          <select id="f-moneda">
+            <option value="USD">USD — se pasa a pesos con el dólar del día</option>
+            <option value="ARS">ARS — precio fijo en pesos</option>
+          </select>
+        </label>
+        <label>Precio <span data-moneda-precio>(USD)</span> *<input id="f-precio" type="number" min="0" step="1" /></label>
+        <label>Precio lista <span data-moneda-precio>(USD)</span> <small>(opcional → Descuento)</small><input id="f-lista" type="number" min="0" step="1" /></label>
+        <p class="col-2 conv-hint" id="f-conv" hidden></p>
         <label>Precio a nuevo (ARS) <small>(opcional → "Nuevo: $…")</small><input id="f-nuevo" type="number" min="0" step="1" /></label>
         <label class="col-2">Link a la publicación del producto nuevo <small>(opcional)</small><input id="f-link-nuevo" type="url" placeholder="https://…" /></label>
         <label>Unidades<input id="f-unidades" type="number" min="1" step="1" value="1" /></label>
@@ -143,7 +150,18 @@
       <p class="muted venta-prod" id="venta-prod"></p>
 
       <div class="form-grid">
-        <label>¿A cuánto se vendió? (USD) *<input id="v-precio" type="number" min="0" step="1" /></label>
+        <label>¿A cuánto se vendió? *
+          <span class="input-moneda">
+            <input id="v-precio" type="number" min="0" step="1" />
+            <select id="v-moneda">
+              <option value="ARS">ARS</option>
+              <option value="USD">USD</option>
+            </select>
+          </span>
+        </label>
+        <label id="wrap-dolar-venta">Cotización usada <small>(pesos por dólar)</small>
+          <input id="v-dolar" type="number" min="1" step="1" /></label>
+        <p class="col-2 conv-hint" id="v-conv" hidden></p>
         <label>Fecha<input id="v-fecha" type="date" /></label>
         <label class="col-2">¿Por qué medio? *
           <input id="v-medio" type="text" list="medios" placeholder="WhatsApp, MercadoLibre, en persona…" />

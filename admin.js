@@ -9,6 +9,8 @@ let productos = [];
 let editando = null;         // producto en edición (objeto con .fotos array)
 let vendiendo = null;        // producto cuya venta se está registrando
 let ordenVendidos = "monto"; // monto | medio | fecha
+let dolarHoy = null;         // cotización del día, para convertir entre monedas
+let ventaOrig = null;        // monto y moneda con los que se abrió el modal de venta
 
 const CATS_DEFAULT = ["Tecnología", "Electrodomésticos", "Climatización", "Mobiliario", "Sillas y banquetas", "Combos"];
 const MEDIOS_DEFAULT = ["WhatsApp", "MercadoLibre", "Facebook Marketplace", "En persona", "Interno 3dar", "Otro"];
@@ -92,6 +94,14 @@ function bindEventos() {
   $("#btn-desvender").addEventListener("click", desvender);
 
   $("#f-combo").addEventListener("change", (e) => show("#wrap-componentes", e.target.checked));
+
+  // moneda del precio: al cambiarla se convierte lo que ya esté escrito
+  $("#f-moneda").addEventListener("change", (e) => convertirCamposProd(e.target.value));
+  ["#f-precio", "#f-lista"].forEach((s) => $(s).addEventListener("input", pintarConvProd));
+
+  // moneda de la venta: idem
+  $("#v-moneda").addEventListener("change", (e) => convertirCampoVenta(e.target.value));
+  ["#v-precio", "#v-dolar"].forEach((s) => $(s).addEventListener("input", pintarConvVenta));
   $("#btn-guardar").addEventListener("click", guardarProd);
   $("#btn-borrar").addEventListener("click", borrarProd);
   $("#btn-guardar-config").addEventListener("click", guardarConfig);
@@ -109,7 +119,30 @@ async function entrarApp() {
   show("#app");
   const { data: { user } } = await sb.auth.getUser();
   $("#adm-sub").textContent = user ? ("Sesión: " + user.email) : "";
-  await cargar();
+  await Promise.all([cargar(), cargarDolar()]);
+  render(); // re-pintar los equivalentes en pesos ya con la cotización
+}
+
+/* La misma cotización que usa el sitio: dólar blue en vivo, y si no hay red,
+ * el valor de respaldo que está cargado en la config. */
+async function cargarDolar() {
+  let fallback = 1300;
+  let api = "https://dolarapi.com/v1/dolares/blue";
+  try {
+    const { data } = await sb.from("config").select("dolar_api, dolar_fallback").eq("id", 1).maybeSingle();
+    if (data) {
+      fallback = Number(data.dolar_fallback) || fallback;
+      api = data.dolar_api || api;
+    }
+  } catch (e) { /* si falla, quedan los valores de arriba */ }
+  try {
+    const res = await fetch(api, { cache: "no-store" });
+    const json = await res.json();
+    const v = Number(json.venta || json.promedio || json.compra);
+    dolarHoy = v && !isNaN(v) ? v : fallback;
+  } catch (e) {
+    dolarHoy = fallback;
+  }
 }
 
 /* ---------------- Cargar / render lista ---------------- */
@@ -154,7 +187,8 @@ function renderVendidos(cont, vendidos) {
   const total = vendidos.reduce((s, p) => s + montoVenta(p), 0);
 
   const head = encabezadoSeccion(`Vendidos (${vendidos.length})`);
-  head.insertAdjacentHTML("beforeend", `<span class="adm-sec__total">Total: ${fmtUSD(total)}</span>`);
+  head.insertAdjacentHTML("beforeend",
+    `<span class="adm-sec__total">Total: ${fmtUSD(total)}${dolarHoy ? ` · hoy ≈ ${fmtARS(total * dolarHoy)}` : ""}</span>`);
   cont.appendChild(head);
 
   // Desglose: cuánto entró por cada medio, de mayor a menor.
@@ -200,12 +234,13 @@ function filaProducto(p) {
   const row = document.createElement("div");
   row.className = "adm-row" + (p.vendido ? " adm-row__sold" : p.publicado ? "" : " adm-row__off");
 
+  const lista = monedaDe(p) === "ARS" ? p.precio_lista_ars : p.precio_lista_usd;
   const meta = p.vendido
     ? `${escapeHtml(p.medio_venta || "sin medio")}${p.fecha_venta ? " · " + fmtFecha(p.fecha_venta) : ""}
-       ${p.precio_usd && montoVenta(p) !== Number(p.precio_usd) ? `· pedía USD ${p.precio_usd}` : ""}
+       ${precioDe(p) ? `· pedía ${fmtPrecioProd(p)}` : ""}
        ${p.nota_venta ? "· " + escapeHtml(p.nota_venta) : ""}`
-    : `${escapeHtml(p.categoria || "")} · USD ${p.precio_usd || 0}
-       ${p.precio_lista_usd ? `· lista ${p.precio_lista_usd}` : ""} · ${fotos.length} foto(s)`;
+    : `${escapeHtml(p.categoria || "")} · ${fmtPrecioProd(p)}${monedaDe(p) === "ARS" ? " fijo" : ""}
+       ${lista ? `· lista ${monedaDe(p) === "ARS" ? fmtARS(lista) : fmtUSD(lista)}` : ""} · ${fotos.length} foto(s)`;
 
   row.innerHTML = `
     <img class="adm-row__thumb" src="${fotos[0] || ""}" alt="" />
@@ -215,7 +250,8 @@ function filaProducto(p) {
       <div class="adm-row__meta">${meta}</div>
     </div>
     ${p.vendido
-      ? `<span class="adm-row__monto">${fmtUSD(montoVenta(p))}</span>
+      ? `<span class="adm-row__monto">${fmtVenta(p)}${
+            ventaMoneda(p) === "ARS" ? `<small>≈ ${fmtUSD(montoVenta(p))}</small>` : ""}</span>
          <span class="adm-row__pill sold">Vendido</span>
          <button class="btn btn-ghost btn-sm" data-act="venta">Editar venta</button>`
       : `<span class="adm-row__pill ${p.publicado ? "on" : "off"}">${p.publicado ? "Publicado" : "Oculto"}</span>
@@ -245,7 +281,8 @@ function nota(txt) {
 function abrirProd(p) {
   editando = p
     ? { ...p, fotos: Array.isArray(p.fotos) ? [...p.fotos] : [] }
-    : { id: crypto.randomUUID(), nombre: "", categoria: "", modelo: "", precio_usd: 0,
+    : { id: crypto.randomUUID(), nombre: "", categoria: "", modelo: "", moneda: "USD", precio_usd: 0,
+        precio_ars: null, precio_lista_ars: null,
         precio_lista_usd: null, precio_nuevo_ars: null, link_nuevo: "", unidades: 1, orden: 100,
         tipo: null, componentes: [], comentario: "", publicado: true, fotos: [], _nuevo: true };
 
@@ -253,8 +290,14 @@ function abrirProd(p) {
   $("#f-nombre").value = editando.nombre || "";
   $("#f-categoria").value = editando.categoria || "";
   $("#f-modelo").value = editando.modelo || "";
-  $("#f-precio").value = editando.precio_usd ?? 0;
-  $("#f-lista").value = editando.precio_lista_usd ?? "";
+  const mon = monedaDe(editando);
+  $("#f-moneda").value = mon;
+  $("#f-precio").value = (mon === "ARS" ? editando.precio_ars : editando.precio_usd) ?? (mon === "ARS" ? "" : 0);
+  $("#f-lista").value = (mon === "ARS" ? editando.precio_lista_ars : editando.precio_lista_usd) ?? "";
+  // Se recuerdan los valores tal como estaban para poder restaurarlos si se
+  // vuelve a la moneda original: así ir y venir no corroe el precio.
+  editando._orig = { moneda: mon, precio: $("#f-precio").value, lista: $("#f-lista").value };
+  pintarMonedaProd();
   $("#f-nuevo").value = editando.precio_nuevo_ars ?? "";
   $("#f-link-nuevo").value = editando.link_nuevo || "";
   $("#f-unidades").value = editando.unidades ?? 1;
@@ -335,13 +378,22 @@ async function guardarProd() {
   const nombre = $("#f-nombre").value.trim();
   if (!nombre) { toast("Poné un nombre.", "err"); return; }
   const combo = $("#f-combo").checked;
+  const mon = $("#f-moneda").value === "ARS" ? "ARS" : "USD";
+  const precio = Number($("#f-precio").value) || 0;
+  const lista = $("#f-lista").value !== "" ? Number($("#f-lista").value) : null;
+  // Con el precio fijado en pesos igual se guarda el equivalente en dólares:
+  // no lo usa el sitio, pero mantiene útil el respaldo de data.js.
+  const usdEquiv = dolarHoy ? Math.round(precio / dolarHoy) : (Number(editando.precio_usd) || 0);
   const fila = {
     id: editando.id,
     nombre,
     categoria: $("#f-categoria").value.trim() || "Otros",
     modelo: $("#f-modelo").value.trim(),
-    precio_usd: Number($("#f-precio").value) || 0,
-    precio_lista_usd: $("#f-lista").value !== "" ? Number($("#f-lista").value) : null,
+    moneda: mon,
+    precio_usd: mon === "USD" ? precio : usdEquiv,
+    precio_ars: mon === "ARS" ? precio : null,
+    precio_lista_ars: mon === "ARS" ? lista : null,
+    precio_lista_usd: mon === "USD" ? lista : null,
     precio_nuevo_ars: $("#f-nuevo").value !== "" ? Number($("#f-nuevo").value) : null,
     link_nuevo: $("#f-link-nuevo").value.trim(),
     unidades: Number($("#f-unidades").value) || 1,
@@ -380,29 +432,57 @@ function abrirVenta(p) {
   const ya = !!p.vendido;
   $("#venta-modal-titulo").textContent = ya ? "Editar venta" : "Registrar venta";
   $("#venta-prod").textContent = (p.nombre || "(sin nombre)") + (p.modelo ? " · " + p.modelo : "");
-  // Si es nueva, arranca con el precio que se pedía: lo más común es vender a ese valor.
-  $("#v-precio").value = ya ? (p.precio_venta_usd ?? "") : (p.precio_usd ?? "");
+
+  // La cotización de esa venta si ya estaba registrada; si no, la del día.
+  $("#v-dolar").value = (ya && p.dolar_venta) ? Math.round(p.dolar_venta)
+    : (dolarHoy ? Math.round(dolarHoy) : "");
+
+  if (ya) {
+    $("#v-moneda").value = ventaMoneda(p);
+    $("#v-precio").value = ventaMonto(p) ?? "";
+  } else {
+    // Arranca en pesos, que es como se cobra casi siempre, con el precio del
+    // producto ya pasado a esa moneda.
+    $("#v-moneda").value = "ARS";
+    $("#v-precio").value = sugerirMonto(p, "ARS");
+  }
   $("#v-medio").value = p.medio_venta || "";
   $("#v-fecha").value = p.fecha_venta || hoyISO();
   $("#v-nota").value = p.nota_venta || "";
   $("#btn-desvender").hidden = !ya;
   $("#btn-guardar-venta").textContent = ya ? "Guardar cambios" : "Guardar venta";
+  ventaOrig = { moneda: $("#v-moneda").value, monto: $("#v-precio").value };
   show("#venta-hint", !ya);
+  pintarConvVenta();
   show("#modal-venta");
 }
 
 async function guardarVenta() {
   if (!vendiendo) return;
   const precio = $("#v-precio").value;
+  const mon = $("#v-moneda").value === "ARS" ? "ARS" : "USD";
   const medio = normalizarMedio($("#v-medio").value);
   if (precio === "") { toast("Poné a cuánto se vendió.", "err"); return; }
   if (!medio) { toast("Poné por qué medio se vendió.", "err"); return; }
+
+  // Lo cobrado se guarda tal cual, y además normalizado a dólares: es lo que
+  // hace que los totales se puedan sumar aunque se cobre en monedas distintas.
+  const monto = Number(precio) || 0;
+  const dolar = mon === "ARS" ? (Number($("#v-dolar").value) || dolarHoy) : null;
+  if (mon === "ARS" && !dolar) {
+    toast("Falta la cotización para pasar el monto a dólares.", "err");
+    return;
+  }
+  const usd = mon === "ARS" ? Math.round(monto / dolar) : monto;
 
   const btn = $("#btn-guardar-venta");
   btn.disabled = true;
   const { error } = await sb.from("productos").update({
     vendido: true,
-    precio_venta_usd: Number(precio) || 0,
+    precio_venta_monto: monto,
+    precio_venta_moneda: mon,
+    dolar_venta: dolar,
+    precio_venta_usd: usd,
     medio_venta: medio,
     fecha_venta: $("#v-fecha").value || hoyISO(),
     nota_venta: $("#v-nota").value.trim(),
@@ -419,7 +499,8 @@ async function desvender() {
   if (!vendiendo) return;
   if (!confirm(`¿Volver “${vendiendo.nombre}” a en venta? Se borra el registro de la venta y, si está publicado, vuelve al catálogo.`)) return;
   const { error } = await sb.from("productos").update({
-    vendido: false, precio_venta_usd: null, medio_venta: null, fecha_venta: null, nota_venta: "",
+    vendido: false, precio_venta_usd: null, precio_venta_monto: null, precio_venta_moneda: "USD",
+    dolar_venta: null, medio_venta: null, fecha_venta: null, nota_venta: "",
   }).eq("id", vendiendo.id);
   if (error) { toast(mensajeDeErrorVenta(error.message), "err"); return; }
   show("#modal-venta", false);
@@ -471,6 +552,86 @@ function pathDeUrl(url) {
 }
 function montoVenta(p) { return Number(p.precio_venta_usd) || 0; }
 function fmtUSD(n) { return "USD " + Math.round(n).toLocaleString("es-AR"); }
+function fmtARS(n) { return "$ " + Math.round(n).toLocaleString("es-AR"); }
+
+/* ---------------- Monedas ----------------
+ * Un producto tiene el precio fijado en USD (se publica convertido al dólar
+ * del día) o en ARS (precio fijo en pesos). La venta, aparte, se cobra en la
+ * moneda que sea: se guarda tal cual y también pasada a dólares, que es lo
+ * que permite sumar los totales.
+ */
+function monedaDe(p) { return p.moneda === "ARS" ? "ARS" : "USD"; }
+function precioDe(p) { return monedaDe(p) === "ARS" ? (Number(p.precio_ars) || 0) : (Number(p.precio_usd) || 0); }
+function fmtPrecioProd(p) { return monedaDe(p) === "ARS" ? fmtARS(precioDe(p)) : fmtUSD(precioDe(p)); }
+
+function ventaMoneda(p) { return p.precio_venta_moneda === "ARS" ? "ARS" : "USD"; }
+function ventaMonto(p) { return p.precio_venta_monto != null ? Number(p.precio_venta_monto) : montoVenta(p); }
+function fmtVenta(p) { return ventaMoneda(p) === "ARS" ? fmtARS(ventaMonto(p)) : fmtUSD(ventaMonto(p)); }
+
+// Monto sugerido al abrir una venta: el precio del producto, en la moneda pedida.
+function sugerirMonto(p, moneda) {
+  const base = precioDe(p);
+  if (!base) return "";
+  if (monedaDe(p) === moneda) return base;
+  const d = Number($("#v-dolar").value) || dolarHoy;
+  if (!d) return "";
+  return moneda === "ARS" ? Math.round(base * d) : Math.round(base / d);
+}
+
+function pintarMonedaProd() {
+  const mon = $("#f-moneda").value === "ARS" ? "ARS" : "USD";
+  document.querySelectorAll("[data-moneda-precio]").forEach((e) => { e.textContent = `(${mon})`; });
+  pintarConvProd();
+}
+
+// Al cambiar la moneda se convierte lo ya escrito, para no retipear.
+function convertirCamposProd(nueva) {
+  const orig = editando && editando._orig;
+  if (orig && orig.moneda === nueva) {
+    $("#f-precio").value = orig.precio;
+    $("#f-lista").value = orig.lista;
+  } else if (dolarHoy) {
+    ["#f-precio", "#f-lista"].forEach((s) => {
+      const v = Number($(s).value);
+      if ($(s).value !== "" && v) $(s).value = nueva === "ARS" ? Math.round(v * dolarHoy) : Math.round(v / dolarHoy);
+    });
+  }
+  pintarMonedaProd();
+}
+
+function pintarConvProd() {
+  const mon = $("#f-moneda").value === "ARS" ? "ARS" : "USD";
+  const hint = $("#f-conv");
+  const v = Number($("#f-precio").value);
+  if (!v || !dolarHoy) { hint.hidden = true; return; }
+  hint.textContent = mon === "ARS"
+    ? `Precio fijo en pesos: ${fmtARS(v)} (hoy ≈ ${fmtUSD(v / dolarHoy)}). No se mueve con el dólar.`
+    : `${fmtUSD(v)} · hoy se publica como ${fmtARS(v * dolarHoy)}, y sigue la cotización.`;
+  hint.hidden = false;
+}
+
+function convertirCampoVenta(nueva) {
+  if (ventaOrig && ventaOrig.moneda === nueva) {
+    $("#v-precio").value = ventaOrig.monto;  // volver sin arrastrar redondeos
+  } else {
+    const d = Number($("#v-dolar").value) || dolarHoy;
+    const v = Number($("#v-precio").value);
+    if (v && d) $("#v-precio").value = nueva === "ARS" ? Math.round(v * d) : Math.round(v / d);
+  }
+  pintarConvVenta();
+}
+
+function pintarConvVenta() {
+  const esARS = $("#v-moneda").value === "ARS";
+  show("#wrap-dolar-venta", esARS);
+  const hint = $("#v-conv");
+  const v = Number($("#v-precio").value);
+  const d = Number($("#v-dolar").value) || dolarHoy;
+  if (!esARS || !v || !d) { hint.hidden = true; return; }
+  hint.textContent = `${fmtARS(v)} ≈ ${fmtUSD(v / d)} — es el valor que suma en el total.`;
+  hint.hidden = false;
+}
+
 function fmtFecha(iso) {
   const [a, m, d] = String(iso).split("-");
   return d ? `${d}/${m}/${a}` : String(iso);
