@@ -89,8 +89,12 @@ label.check input { width: auto; }
 }
 .adm-sec__total { font-size: .9rem; font-weight: 600; color: var(--accent); margin-left: auto; }
 
-/* Desglose por medio de venta */
-.adm-resumen { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Desgloses (por medio, por forma de pago) */
+.adm-resumen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.adm-resumen__tit {
+  font-size: .7rem; font-weight: 700; color: var(--text-faint);
+  text-transform: uppercase; letter-spacing: .06em; min-width: 42px;
+}
 .adm-resumen__item {
   font-size: .8rem; color: var(--text-dim);
   background: var(--bg-soft); border-radius: 999px; padding: 4px 11px;

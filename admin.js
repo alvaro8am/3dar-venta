@@ -101,6 +101,7 @@ function bindEventos() {
 
   // moneda de la venta: idem
   $("#v-moneda").addEventListener("change", (e) => convertirCampoVenta(e.target.value));
+  $("#v-pago").addEventListener("change", pintarPago);
   ["#v-precio", "#v-dolar"].forEach((s) => $(s).addEventListener("input", pintarConvVenta));
   $("#btn-guardar").addEventListener("click", guardarProd);
   $("#btn-borrar").addEventListener("click", borrarProd);
@@ -161,11 +162,21 @@ function rellenarCats() {
   $("#cats").innerHTML = Array.from(cats).map((c) => `<option value="${c}">`).join("");
 }
 
-/* Los medios sugeridos: los de siempre + los que ya se hayan usado. */
+/* Sugerencias de los campos libres: los valores de siempre + los ya usados.
+ * Las cuentas no tienen lista fija: se van aprendiendo de lo que cargues. */
 function rellenarMedios() {
   const medios = new Set(MEDIOS_DEFAULT);
   productos.forEach((p) => p.medio_venta && medios.add(p.medio_venta));
   $("#medios").innerHTML = Array.from(medios).map((m) => `<option value="${escapeHtml(m)}">`).join("");
+
+  const cuentas = new Set();
+  productos.forEach((p) => p.cuenta_destino && cuentas.add(p.cuenta_destino));
+  $("#cuentas").innerHTML = Array.from(cuentas).map((c) => `<option value="${escapeHtml(c)}">`).join("");
+}
+
+// La cuenta solo tiene sentido si pagaron por transferencia.
+function pintarPago() {
+  show("#wrap-cuenta", $("#v-pago").value === "Transferencia");
 }
 
 function render() {
@@ -191,25 +202,15 @@ function renderVendidos(cont, vendidos) {
     `<span class="adm-sec__total">Total: ${fmtUSD(total)}${dolarHoy ? ` · hoy ≈ ${fmtARS(total * dolarHoy)}` : ""}</span>`);
   cont.appendChild(head);
 
-  // Desglose: cuánto entró por cada medio, de mayor a menor.
-  const porMedio = new Map();
-  vendidos.forEach((p) => {
-    const m = p.medio_venta || "Sin medio";
-    porMedio.set(m, (porMedio.get(m) || 0) + montoVenta(p));
-  });
-  const resumen = document.createElement("div");
-  resumen.className = "adm-resumen";
-  resumen.innerHTML = Array.from(porMedio.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([m, v]) => `<span class="adm-resumen__item"><b>${escapeHtml(m)}</b> ${fmtUSD(v)}</span>`)
-    .join("");
-  cont.appendChild(resumen);
+  // Desgloses: cuánto entró por cada medio y por cada forma de pago.
+  cont.appendChild(chipsResumen("Medio", sumarPor(vendidos, (p) => p.medio_venta || "Sin medio")));
+  cont.appendChild(chipsResumen("Pago", sumarPor(vendidos, (p) => etiquetaPago(p) || "Sin especificar")));
 
   // Controles de orden.
   const ord = document.createElement("div");
   ord.className = "adm-orden";
   ord.innerHTML = "<span>Ordenar por:</span>" +
-    [["monto", "monto"], ["medio", "medio"], ["fecha", "fecha"]]
+    [["monto", "monto"], ["medio", "medio"], ["pago", "pago"], ["fecha", "fecha"]]
       .map(([k, t]) => `<button class="adm-orden__btn${ordenVendidos === k ? " on" : ""}" data-orden="${k}">${t}</button>`)
       .join("");
   ord.querySelectorAll("[data-orden]").forEach((b) =>
@@ -219,11 +220,39 @@ function renderVendidos(cont, vendidos) {
   ordenarVendidos(vendidos).forEach((p) => cont.appendChild(filaProducto(p)));
 }
 
+/* Suma los montos (en USD) agrupando por lo que devuelva fn. */
+function sumarPor(vendidos, fn) {
+  const m = new Map();
+  vendidos.forEach((p) => { const k = fn(p); m.set(k, (m.get(k) || 0) + montoVenta(p)); });
+  return Array.from(m.entries());
+}
+
+function chipsResumen(titulo, entradas) {
+  const div = document.createElement("div");
+  div.className = "adm-resumen";
+  div.innerHTML = `<span class="adm-resumen__tit">${escapeHtml(titulo)}</span>` +
+    entradas.sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `<span class="adm-resumen__item"><b>${escapeHtml(k)}</b> ${fmtUSD(v)}</span>`)
+      .join("");
+  return div;
+}
+
+// "Transferencia → Banco Galicia", o solo "Efectivo".
+function etiquetaPago(p) {
+  if (!p.forma_pago) return "";
+  return p.forma_pago === "Transferencia" && p.cuenta_destino
+    ? `Transferencia → ${p.cuenta_destino}`
+    : p.forma_pago;
+}
+
 function ordenarVendidos(arr) {
   const a = [...arr];
   if (ordenVendidos === "medio")
     return a.sort((x, y) =>
       (x.medio_venta || "zzz").localeCompare(y.medio_venta || "zzz", "es") || montoVenta(y) - montoVenta(x));
+  if (ordenVendidos === "pago")
+    return a.sort((x, y) =>
+      (etiquetaPago(x) || "zzz").localeCompare(etiquetaPago(y) || "zzz", "es") || montoVenta(y) - montoVenta(x));
   if (ordenVendidos === "fecha")  // más reciente primero
     return a.sort((x, y) => String(y.fecha_venta || "").localeCompare(String(x.fecha_venta || "")));
   return a.sort((x, y) => montoVenta(y) - montoVenta(x));
@@ -236,7 +265,7 @@ function filaProducto(p) {
 
   const lista = monedaDe(p) === "ARS" ? p.precio_lista_ars : p.precio_lista_usd;
   const meta = p.vendido
-    ? `${escapeHtml(p.medio_venta || "sin medio")}${p.fecha_venta ? " · " + fmtFecha(p.fecha_venta) : ""}
+    ? `${escapeHtml(p.medio_venta || "sin medio")}${p.forma_pago ? " · " + escapeHtml(etiquetaPago(p)) : ""}${p.fecha_venta ? " · " + fmtFecha(p.fecha_venta) : ""}
        ${precioDe(p) ? `· pedía ${fmtPrecioProd(p)}` : ""}
        ${p.nota_venta ? "· " + escapeHtml(p.nota_venta) : ""}`
     : `${escapeHtml(p.categoria || "")} · ${fmtPrecioProd(p)}${monedaDe(p) === "ARS" ? " fijo" : ""}
@@ -447,6 +476,11 @@ function abrirVenta(p) {
     $("#v-precio").value = sugerirMonto(p, "ARS");
   }
   $("#v-medio").value = p.medio_venta || "";
+  // En una venta nueva arranca en Efectivo; en una ya cargada sin forma de
+  // pago queda en "sin especificar" en vez de inventarle una.
+  $("#v-pago").value = ya ? (p.forma_pago || "") : "Efectivo";
+  $("#v-cuenta").value = p.cuenta_destino || "";
+  pintarPago();
   $("#v-fecha").value = p.fecha_venta || hoyISO();
   $("#v-nota").value = p.nota_venta || "";
   $("#btn-desvender").hidden = !ya;
@@ -462,8 +496,11 @@ async function guardarVenta() {
   const precio = $("#v-precio").value;
   const mon = $("#v-moneda").value === "ARS" ? "ARS" : "USD";
   const medio = normalizarMedio($("#v-medio").value);
+  const pago = $("#v-pago").value;
+  const cuenta = pago === "Transferencia" ? normalizarCuenta($("#v-cuenta").value) : "";
   if (precio === "") { toast("Poné a cuánto se vendió.", "err"); return; }
   if (!medio) { toast("Poné por qué medio se vendió.", "err"); return; }
+  if (pago === "Transferencia" && !cuenta) { toast("Poné a qué cuenta transfirieron.", "err"); return; }
 
   // Lo cobrado se guarda tal cual, y además normalizado a dólares: es lo que
   // hace que los totales se puedan sumar aunque se cobre en monedas distintas.
@@ -484,6 +521,8 @@ async function guardarVenta() {
     dolar_venta: dolar,
     precio_venta_usd: usd,
     medio_venta: medio,
+    forma_pago: pago || null,
+    cuenta_destino: cuenta || null,
     fecha_venta: $("#v-fecha").value || hoyISO(),
     nota_venta: $("#v-nota").value.trim(),
   }).eq("id", vendiendo.id);
@@ -501,6 +540,7 @@ async function desvender() {
   const { error } = await sb.from("productos").update({
     vendido: false, precio_venta_usd: null, precio_venta_monto: null, precio_venta_moneda: "USD",
     dolar_venta: null, medio_venta: null, fecha_venta: null, nota_venta: "",
+    forma_pago: null, cuenta_destino: null,
   }).eq("id", vendiendo.id);
   if (error) { toast(mensajeDeErrorVenta(error.message), "err"); return; }
   show("#modal-venta", false);
@@ -640,15 +680,17 @@ function hoyISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-/* Reusa la forma ya escrita de un medio ("whatsapp" → "WhatsApp") para que el
- * desglose por medio no se parta en variantes de la misma cosa. */
-function normalizarMedio(v) {
+/* Reusa la forma ya escrita de un valor ("whatsapp" → "WhatsApp") para que los
+ * desgloses no se partan en variantes de la misma cosa. */
+function normalizarContra(v, campo, defaults) {
   const s = String(v || "").trim();
   if (!s) return "";
-  const conocidos = new Set(MEDIOS_DEFAULT);
-  productos.forEach((p) => p.medio_venta && conocidos.add(p.medio_venta));
+  const conocidos = new Set(defaults || []);
+  productos.forEach((p) => p[campo] && conocidos.add(p[campo]));
   return Array.from(conocidos).find((m) => m.toLowerCase() === s.toLowerCase()) || s;
 }
+function normalizarMedio(v) { return normalizarContra(v, "medio_venta", MEDIOS_DEFAULT); }
+function normalizarCuenta(v) { return normalizarContra(v, "cuenta_destino", []); }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }

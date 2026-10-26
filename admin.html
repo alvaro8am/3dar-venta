@@ -163,11 +163,22 @@
           <input id="v-dolar" type="number" min="1" step="1" /></label>
         <p class="col-2 conv-hint" id="v-conv" hidden></p>
         <label>Fecha<input id="v-fecha" type="date" /></label>
-        <label class="col-2">¿Por qué medio? *
+        <label class="col-2">¿Por qué medio? * <small>(por dónde apareció el comprador)</small>
           <input id="v-medio" type="text" list="medios" placeholder="WhatsApp, MercadoLibre, en persona…" />
           <datalist id="medios"></datalist>
         </label>
-        <label class="col-2">Nota <small>(opcional: comprador, forma de pago, lo que sea)</small>
+        <label>¿Cómo pagó?
+          <select id="v-pago">
+            <option value="">— sin especificar —</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+          </select>
+        </label>
+        <label id="wrap-cuenta">¿A qué cuenta? *
+          <input id="v-cuenta" type="text" list="cuentas" placeholder="Nombre del banco o de la cuenta" />
+          <datalist id="cuentas"></datalist>
+        </label>
+        <label class="col-2">Nota <small>(opcional: quién lo compró, en cuántas partes, lo que sea)</small>
           <textarea id="v-nota" rows="2"></textarea></label>
       </div>
 
