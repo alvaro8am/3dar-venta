@@ -6,9 +6,12 @@ const show = (sel, on = true) => { const e = $(sel); if (e) e.hidden = !on; };
 
 let sb = null;
 let productos = [];
-let editando = null; // producto en edición (objeto con .fotos array)
+let editando = null;         // producto en edición (objeto con .fotos array)
+let vendiendo = null;        // producto cuya venta se está registrando
+let ordenVendidos = "monto"; // monto | medio | fecha
 
 const CATS_DEFAULT = ["Tecnología", "Electrodomésticos", "Climatización", "Mobiliario", "Sillas y banquetas", "Combos"];
+const MEDIOS_DEFAULT = ["WhatsApp", "MercadoLibre", "Facebook Marketplace", "En persona", "Interno 3dar", "Otro"];
 
 document.addEventListener("DOMContentLoaded", arrancar);
 
@@ -82,6 +85,12 @@ function bindEventos() {
   // modal producto
   document.querySelectorAll("[data-cerrar-prod]").forEach((el) => el.addEventListener("click", () => show("#modal-prod", false)));
   document.querySelectorAll("[data-cerrar-config]").forEach((el) => el.addEventListener("click", () => show("#modal-config", false)));
+
+  // modal venta
+  document.querySelectorAll("[data-cerrar-venta]").forEach((el) => el.addEventListener("click", () => show("#modal-venta", false)));
+  $("#btn-guardar-venta").addEventListener("click", guardarVenta);
+  $("#btn-desvender").addEventListener("click", desvender);
+
   $("#f-combo").addEventListener("change", (e) => show("#wrap-componentes", e.target.checked));
   $("#btn-guardar").addEventListener("click", guardarProd);
   $("#btn-borrar").addEventListener("click", borrarProd);
@@ -109,6 +118,7 @@ async function cargar() {
   if (error) { toast("Error cargando: " + error.message, "err"); return; }
   productos = data || [];
   rellenarCats();
+  rellenarMedios();
   render();
 }
 
@@ -118,27 +128,117 @@ function rellenarCats() {
   $("#cats").innerHTML = Array.from(cats).map((c) => `<option value="${c}">`).join("");
 }
 
+/* Los medios sugeridos: los de siempre + los que ya se hayan usado. */
+function rellenarMedios() {
+  const medios = new Set(MEDIOS_DEFAULT);
+  productos.forEach((p) => p.medio_venta && medios.add(p.medio_venta));
+  $("#medios").innerHTML = Array.from(medios).map((m) => `<option value="${escapeHtml(m)}">`).join("");
+}
+
 function render() {
   const cont = $("#lista");
   cont.innerHTML = "";
   if (!productos.length) { cont.innerHTML = `<p class="muted">No hay productos todavía. Tocá “+ Nuevo producto”.</p>`; return; }
-  productos.forEach((p) => {
-    const fotos = Array.isArray(p.fotos) ? p.fotos : [];
-    const row = document.createElement("div");
-    row.className = "adm-row" + (p.publicado ? "" : " adm-row__off");
-    row.innerHTML = `
-      <img class="adm-row__thumb" src="${fotos[0] || ""}" alt="" />
-      <div class="adm-row__main">
-        <div class="adm-row__nombre">${escapeHtml(p.nombre || "(sin nombre)")}
-          ${p.tipo === "combo" ? '<span class="adm-row__tag">combo</span>' : ""}</div>
-        <div class="adm-row__meta">${escapeHtml(p.categoria || "")} · USD ${p.precio_usd || 0}
-          ${p.precio_lista_usd ? `· lista ${p.precio_lista_usd}` : ""} · ${fotos.length} foto(s)</div>
-      </div>
-      <span class="adm-row__pill ${p.publicado ? "on" : "off"}">${p.publicado ? "Publicado" : "Oculto"}</span>
-      <button class="btn btn-ghost btn-sm">Editar</button>`;
-    row.querySelector("button").addEventListener("click", () => abrirProd(p));
-    cont.appendChild(row);
+
+  const enVenta = productos.filter((p) => !p.vendido);
+  const vendidos = productos.filter((p) => p.vendido);
+
+  cont.appendChild(encabezadoSeccion(`En venta (${enVenta.length})`));
+  if (!enVenta.length) cont.appendChild(nota("Todo vendido 🎉"));
+  enVenta.forEach((p) => cont.appendChild(filaProducto(p)));
+
+  if (vendidos.length) renderVendidos(cont, vendidos);
+}
+
+function renderVendidos(cont, vendidos) {
+  const total = vendidos.reduce((s, p) => s + montoVenta(p), 0);
+
+  const head = encabezadoSeccion(`Vendidos (${vendidos.length})`);
+  head.insertAdjacentHTML("beforeend", `<span class="adm-sec__total">Total: ${fmtUSD(total)}</span>`);
+  cont.appendChild(head);
+
+  // Desglose: cuánto entró por cada medio, de mayor a menor.
+  const porMedio = new Map();
+  vendidos.forEach((p) => {
+    const m = p.medio_venta || "Sin medio";
+    porMedio.set(m, (porMedio.get(m) || 0) + montoVenta(p));
   });
+  const resumen = document.createElement("div");
+  resumen.className = "adm-resumen";
+  resumen.innerHTML = Array.from(porMedio.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([m, v]) => `<span class="adm-resumen__item"><b>${escapeHtml(m)}</b> ${fmtUSD(v)}</span>`)
+    .join("");
+  cont.appendChild(resumen);
+
+  // Controles de orden.
+  const ord = document.createElement("div");
+  ord.className = "adm-orden";
+  ord.innerHTML = "<span>Ordenar por:</span>" +
+    [["monto", "monto"], ["medio", "medio"], ["fecha", "fecha"]]
+      .map(([k, t]) => `<button class="adm-orden__btn${ordenVendidos === k ? " on" : ""}" data-orden="${k}">${t}</button>`)
+      .join("");
+  ord.querySelectorAll("[data-orden]").forEach((b) =>
+    b.addEventListener("click", () => { ordenVendidos = b.dataset.orden; render(); }));
+  cont.appendChild(ord);
+
+  ordenarVendidos(vendidos).forEach((p) => cont.appendChild(filaProducto(p)));
+}
+
+function ordenarVendidos(arr) {
+  const a = [...arr];
+  if (ordenVendidos === "medio")
+    return a.sort((x, y) =>
+      (x.medio_venta || "zzz").localeCompare(y.medio_venta || "zzz", "es") || montoVenta(y) - montoVenta(x));
+  if (ordenVendidos === "fecha")  // más reciente primero
+    return a.sort((x, y) => String(y.fecha_venta || "").localeCompare(String(x.fecha_venta || "")));
+  return a.sort((x, y) => montoVenta(y) - montoVenta(x));
+}
+
+function filaProducto(p) {
+  const fotos = Array.isArray(p.fotos) ? p.fotos : [];
+  const row = document.createElement("div");
+  row.className = "adm-row" + (p.vendido ? " adm-row__sold" : p.publicado ? "" : " adm-row__off");
+
+  const meta = p.vendido
+    ? `${escapeHtml(p.medio_venta || "sin medio")}${p.fecha_venta ? " · " + fmtFecha(p.fecha_venta) : ""}
+       ${p.precio_usd && montoVenta(p) !== Number(p.precio_usd) ? `· pedía USD ${p.precio_usd}` : ""}
+       ${p.nota_venta ? "· " + escapeHtml(p.nota_venta) : ""}`
+    : `${escapeHtml(p.categoria || "")} · USD ${p.precio_usd || 0}
+       ${p.precio_lista_usd ? `· lista ${p.precio_lista_usd}` : ""} · ${fotos.length} foto(s)`;
+
+  row.innerHTML = `
+    <img class="adm-row__thumb" src="${fotos[0] || ""}" alt="" />
+    <div class="adm-row__main">
+      <div class="adm-row__nombre">${escapeHtml(p.nombre || "(sin nombre)")}
+        ${p.tipo === "combo" ? '<span class="adm-row__tag">combo</span>' : ""}</div>
+      <div class="adm-row__meta">${meta}</div>
+    </div>
+    ${p.vendido
+      ? `<span class="adm-row__monto">${fmtUSD(montoVenta(p))}</span>
+         <span class="adm-row__pill sold">Vendido</span>
+         <button class="btn btn-ghost btn-sm" data-act="venta">Editar venta</button>`
+      : `<span class="adm-row__pill ${p.publicado ? "on" : "off"}">${p.publicado ? "Publicado" : "Oculto"}</span>
+         <button class="btn btn-ghost btn-sm" data-act="venta">Vendido</button>`}
+    <button class="btn btn-ghost btn-sm" data-act="editar">Editar</button>`;
+
+  row.querySelector('[data-act="venta"]').addEventListener("click", () => abrirVenta(p));
+  row.querySelector('[data-act="editar"]').addEventListener("click", () => abrirProd(p));
+  return row;
+}
+
+function encabezadoSeccion(titulo) {
+  const h = document.createElement("div");
+  h.className = "adm-sec";
+  h.innerHTML = `<h2 class="adm-sec__titulo">${escapeHtml(titulo)}</h2>`;
+  return h;
+}
+
+function nota(txt) {
+  const p = document.createElement("p");
+  p.className = "muted";
+  p.textContent = txt;
+  return p;
 }
 
 /* ---------------- Modal producto ---------------- */
@@ -274,6 +374,67 @@ async function borrarProd() {
   await cargar();
 }
 
+/* ---------------- Registrar / editar una venta ---------------- */
+function abrirVenta(p) {
+  vendiendo = p;
+  const ya = !!p.vendido;
+  $("#venta-modal-titulo").textContent = ya ? "Editar venta" : "Registrar venta";
+  $("#venta-prod").textContent = (p.nombre || "(sin nombre)") + (p.modelo ? " · " + p.modelo : "");
+  // Si es nueva, arranca con el precio que se pedía: lo más común es vender a ese valor.
+  $("#v-precio").value = ya ? (p.precio_venta_usd ?? "") : (p.precio_usd ?? "");
+  $("#v-medio").value = p.medio_venta || "";
+  $("#v-fecha").value = p.fecha_venta || hoyISO();
+  $("#v-nota").value = p.nota_venta || "";
+  $("#btn-desvender").hidden = !ya;
+  $("#btn-guardar-venta").textContent = ya ? "Guardar cambios" : "Guardar venta";
+  show("#venta-hint", !ya);
+  show("#modal-venta");
+}
+
+async function guardarVenta() {
+  if (!vendiendo) return;
+  const precio = $("#v-precio").value;
+  const medio = normalizarMedio($("#v-medio").value);
+  if (precio === "") { toast("Poné a cuánto se vendió.", "err"); return; }
+  if (!medio) { toast("Poné por qué medio se vendió.", "err"); return; }
+
+  const btn = $("#btn-guardar-venta");
+  btn.disabled = true;
+  const { error } = await sb.from("productos").update({
+    vendido: true,
+    precio_venta_usd: Number(precio) || 0,
+    medio_venta: medio,
+    fecha_venta: $("#v-fecha").value || hoyISO(),
+    nota_venta: $("#v-nota").value.trim(),
+  }).eq("id", vendiendo.id);
+  btn.disabled = false;
+
+  if (error) { toast(mensajeDeErrorVenta(error.message), "err"); return; }
+  show("#modal-venta", false);
+  toast("Venta registrada ✓", "ok");
+  await cargar();
+}
+
+async function desvender() {
+  if (!vendiendo) return;
+  if (!confirm(`¿Volver “${vendiendo.nombre}” a en venta? Se borra el registro de la venta y, si está publicado, vuelve al catálogo.`)) return;
+  const { error } = await sb.from("productos").update({
+    vendido: false, precio_venta_usd: null, medio_venta: null, fecha_venta: null, nota_venta: "",
+  }).eq("id", vendiendo.id);
+  if (error) { toast(mensajeDeErrorVenta(error.message), "err"); return; }
+  show("#modal-venta", false);
+  toast("Volvió a en venta", "ok");
+  await cargar();
+}
+
+/* Si falta correr la migración, el error de Supabase es incomprensible. */
+function mensajeDeErrorVenta(msg) {
+  const m = String(msg || "");
+  if (/schema cache|does not exist|vendido|precio_venta_usd/i.test(m))
+    return "La base todavía no tiene las columnas de venta. Hay que correr nube/ventas.sql en el SQL Editor de Supabase.";
+  return mensajeDeError(m);
+}
+
 /* ---------------- Config del sitio ---------------- */
 async function abrirConfig() {
   const { data } = await sb.from("config").select("*").eq("id", 1).maybeSingle();
@@ -307,6 +468,25 @@ async function guardarConfig() {
 function pathDeUrl(url) {
   const m = String(url).split("/fotos/")[1];
   return m ? decodeURIComponent(m) : null;
+}
+function montoVenta(p) { return Number(p.precio_venta_usd) || 0; }
+function fmtUSD(n) { return "USD " + Math.round(n).toLocaleString("es-AR"); }
+function fmtFecha(iso) {
+  const [a, m, d] = String(iso).split("-");
+  return d ? `${d}/${m}/${a}` : String(iso);
+}
+function hoyISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+/* Reusa la forma ya escrita de un medio ("whatsapp" → "WhatsApp") para que el
+ * desglose por medio no se parta en variantes de la misma cosa. */
+function normalizarMedio(v) {
+  const s = String(v || "").trim();
+  if (!s) return "";
+  const conocidos = new Set(MEDIOS_DEFAULT);
+  productos.forEach((p) => p.medio_venta && conocidos.add(p.medio_venta));
+  return Array.from(conocidos).find((m) => m.toLowerCase() === s.toLowerCase()) || s;
 }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

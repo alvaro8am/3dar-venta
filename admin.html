@@ -134,6 +134,36 @@
     </div>
   </div>
 
+  <!-- Modal venta -->
+  <div class="modal" id="modal-venta" hidden>
+    <div class="modal__backdrop" data-cerrar-venta></div>
+    <div class="modal__box modal__box--sm">
+      <button class="modal__close" data-cerrar-venta aria-label="Cerrar">×</button>
+      <h2 id="venta-modal-titulo">Registrar venta</h2>
+      <p class="muted venta-prod" id="venta-prod"></p>
+
+      <div class="form-grid">
+        <label>¿A cuánto se vendió? (USD) *<input id="v-precio" type="number" min="0" step="1" /></label>
+        <label>Fecha<input id="v-fecha" type="date" /></label>
+        <label class="col-2">¿Por qué medio? *
+          <input id="v-medio" type="text" list="medios" placeholder="WhatsApp, MercadoLibre, en persona…" />
+          <datalist id="medios"></datalist>
+        </label>
+        <label class="col-2">Nota <small>(opcional: comprador, forma de pago, lo que sea)</small>
+          <textarea id="v-nota" rows="2"></textarea></label>
+      </div>
+
+      <p class="venta-hint" id="venta-hint">Al guardar, el producto sale del catálogo público.</p>
+
+      <div class="modal__footer">
+        <button class="btn btn-danger-ghost" id="btn-desvender" hidden>Volver a “en venta”</button>
+        <span class="spacer"></span>
+        <button class="btn btn-ghost" data-cerrar-venta>Cancelar</button>
+        <button class="btn btn-primary" id="btn-guardar-venta">Guardar venta</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast" hidden></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

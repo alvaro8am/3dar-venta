@@ -28,6 +28,10 @@ label.check input { width: auto; }
   color: var(--text); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
   transition: .15s;
 }
+/* El display: inline-flex de arriba le gana al [hidden] del navegador, así que
+ * los botones que se esconden por atributo (Borrar, Volver a en venta) hay que
+ * apagarlos a mano. */
+.btn[hidden] { display: none; }
 .btn-sm { padding: 6px 12px; font-size: .82rem; }
 .btn:hover { border-color: var(--text-dim); }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -72,6 +76,47 @@ label.check input { width: auto; }
 }
 .adm-row__pill.on { color: var(--wpp); border-color: var(--wpp); }
 .adm-row__pill.off { color: var(--text-dim); }
+
+/* Secciones de la lista (En venta / Vendidos) */
+.adm-sec {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  margin: 22px 0 2px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.adm-lista > .adm-sec:first-child { margin-top: 6px; }
+.adm-sec__titulo {
+  margin: 0; font-size: .78rem; font-weight: 700; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.adm-sec__total { font-size: .9rem; font-weight: 600; color: var(--accent); margin-left: auto; }
+
+/* Desglose por medio de venta */
+.adm-resumen { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-resumen__item {
+  font-size: .8rem; color: var(--text-dim);
+  background: var(--bg-soft); border-radius: 999px; padding: 4px 11px;
+}
+.adm-resumen__item b { color: var(--text); font-weight: 600; }
+
+/* Controles de orden */
+.adm-orden { display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--text-faint); }
+.adm-orden__btn {
+  border: 1px solid transparent; background: none; cursor: pointer;
+  font: inherit; color: var(--text-dim); padding: 3px 9px; border-radius: 999px;
+}
+.adm-orden__btn:hover { background: var(--bg-soft); }
+.adm-orden__btn.on { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+/* Fila vendida */
+.adm-row__sold { background: var(--bg-soft); }
+.adm-row__sold .adm-row__thumb { opacity: .55; }
+.adm-row__sold .adm-row__nombre { color: var(--text-dim); }
+.adm-row__monto { font-size: .92rem; font-weight: 600; white-space: nowrap; }
+.adm-row__pill.sold { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* Modal de venta */
+.modal__box--sm { width: min(520px, 100%); }
+.venta-prod { margin: -8px 0 16px; font-size: .9rem; }
+.venta-hint { margin: 14px 0 0; font-size: .8rem; color: var(--text-faint); }
 
 /* Modal */
 .modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: 24px 14px; overflow-y: auto; }

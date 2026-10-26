@@ -50,7 +50,11 @@ window.obtenerDatos = async function () {
         sb.from("config").select("*").eq("id", 1).maybeSingle(),
       ]);
       if (prodRes.error) throw prodRes.error;
-      const items = (prodRes.data || []).map(mapProducto);
+      // Lo vendido no se muestra. Se filtra acá y no en la query a propósito:
+      // si la base todavía no tiene la columna `vendido` (nube/ventas.sql sin
+      // correr), `r.vendido` es undefined y el catálogo sale completo, en vez
+      // de que la query falle y el sitio se vea vacío.
+      const items = (prodRes.data || []).filter((r) => !r.vendido).map(mapProducto);
       const config = confRes.data ? mapConfig(confRes.data) : {};
       return { config, items, fuente: "nube" };
     } catch (err) {
